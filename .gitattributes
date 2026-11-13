@@ -1,0 +1,21 @@
+# Normalize line endings: Godot and GDScript files use LF on every platform.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF so they behave well in PowerShell / cmd.
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.webp binary
+*.glb binary
+*.blend binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
+*.apk binary
+*.aab binary

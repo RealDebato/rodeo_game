@@ -1,0 +1,17 @@
+# Godot 4 editor cache and import data (regenerated on open; also holds export credentials)
+.godot/
+
+# Gradle build template installed by "Project > Install Android Build Template"
+/android/
+
+# Local build output (APK/AAB)
+/build/
+
+# Signing keys must never be committed
+*.keystore
+*.jks
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.tmp

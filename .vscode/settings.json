@@ -1,0 +1,33 @@
+{
+  // GODOT is a user environment variable set by tools/setup_windows.ps1 (console Godot exe).
+  // VS Code only sees it after a full restart (close ALL VS Code windows).
+  "godotTools.editorPath.godot4": "${env:GODOT}",
+  // Godot 4.7's editor serves the GDScript language server on 6005
+  // (Editor Settings > Network > Language Server); godot-tools defaults to 6008.
+  "godotTools.lsp.serverPort": 6005,
+
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+
+  "[gdscript]": {
+    "editor.insertSpaces": false,
+    "editor.tabSize": 4,
+    "editor.detectIndentation": false
+  },
+
+  "files.exclude": {
+    "**/.godot": true,
+    "**/*.import": true
+  },
+  "search.exclude": {
+    "**/.godot": true,
+    "build/**": true
+  },
+  "files.associations": {
+    "*.tscn": "gdresource",
+    "*.tres": "gdresource",
+    "project.godot": "properties",
+    "export_presets.cfg": "properties"
+  }
+}
