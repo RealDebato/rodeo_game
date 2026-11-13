@@ -77,7 +77,10 @@ if ($NoInstall) { return }
 # Start the adb server in its own hidden console. If the first adb call spawns the server instead,
 # the long-lived server inherits this script's stdout/stderr handles, and any caller that captures
 # our output (e.g. `$x = build_android.ps1 | Out-String`) waits forever for end-of-output.
-Start-Process -FilePath $adb -ArgumentList 'start-server' -WindowStyle Hidden -Wait
+# Do NOT use `Start-Process -Wait`: in Windows PowerShell it also waits for child processes,
+# i.e. for the adb server, which never exits. WaitForExit() waits for `adb start-server` only.
+$adbStart = Start-Process -FilePath $adb -ArgumentList 'start-server' -WindowStyle Hidden -PassThru
+if (-not $adbStart.WaitForExit(30000)) { throw 'adb start-server did not finish within 30 s.' }
 
 $devices =@(& $adb devices | Select-Object -Skip 1 | Where-Object { $_ -match '\tdevice$' })
 if ($devices.Count -eq 0) {

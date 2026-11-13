@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/game/game.gd" id="1_game"]
+[ext_resource type="Resource" path="res://data/simulation/default_simulation.tres" id="2_sim"]
+[ext_resource type="Resource" path="res://data/input/default_aim.tres" id="3_aim"]
+[ext_resource type="Environment" path="res://assets/environment/space_environment.tres" id="4_env"]
+[ext_resource type="PackedScene" path="res://src/debris/debris.tscn" id="5_debris"]
+[ext_resource type="Resource" path="res://data/debris/envisat.tres" id="6_envisat"]
+[ext_resource type="PackedScene" path="res://src/laser/laser_emitter.tscn" id="7_laser"]
+[ext_resource type="PackedScene" path="res://src/ui/game_hud.tscn" id="8_hud"]
+
+[node name="Game" type="Node3D"]
+script = ExtResource("1_game")
+simulation_config = ExtResource("2_sim")
+aim_config = ExtResource("3_aim")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("4_env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+light_energy = 1.5
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 38)
+fov = 50.0
+far = 500.0
+
+[node name="Debris" parent="." instance=ExtResource("5_debris")]
+definition = ExtResource("6_envisat")
+
+[node name="Laser" parent="." instance=ExtResource("7_laser")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, -3, 33)
+
+[node name="GameHUD" parent="." instance=ExtResource("8_hud")]

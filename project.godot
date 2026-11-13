@@ -13,9 +13,15 @@ config_version=5
 config/name="Laser De-Tumbling"
 config/description="Stop a tumbling space debris object using laser-ablation recoil."
 config/version="0.1.0"
-run/main_scene="res://src/boot/device_check.tscn"
+run/main_scene="res://src/ui/main_menu.tscn"
+config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
+
+[autoload]
+
+Settings="*res://src/persistence/settings.gd"
+Highscores="*res://src/persistence/highscores.gd"
 
 [debug]
 
@@ -31,12 +37,21 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=4
 
+[gui]
+
+theme/custom="res://src/ui/theme/mission_control_theme.tres"
+
 [input_devices]
 
 pointing/emulate_touch_from_mouse=true
 sensors/enable_accelerometer=true
 sensors/enable_gravity=true
 sensors/enable_gyroscope=true
+
+[layer_names]
+
+3d_physics/layer_1="world"
+3d_physics/layer_2="debris"
 
 [rendering]
 

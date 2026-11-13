@@ -17,10 +17,19 @@ The full product brief lives in the first conversation; the condensed design is 
 - **Milestone 1 (environment) – complete, verified 2026-11-13 on Fairphone 4 5G** (Android 13,
   Adreno 619, Vulkan/Mobile renderer, 2340×1080): rendering, landscape flip, multi-touch,
   accelerometer/gravity/gyroscope, pause/resume notifications, quit/back all OK.
-  Main scene is `src/boot/device_check.tscn` (temporary platform smoke test).
+  `src/boot/device_check.tscn` remains as diagnostics scene (run it with F6).
 - Godot 4.7 sensors are opt-in: `input_devices/sensors/enable_accelerometer|gravity|gyroscope`
   are enabled in `project.godot` (magnetometer deliberately off). Without them the values are zero.
-- Next: Milestone 2 – Envisat model, rotational physics, laser raycast, recoil torque.
+- **Milestone 2 (simulation prototype) – done**, verified on the Fairphone. Envisat is a
+  primitive placeholder (no suitably licensed Envisat model found).
+- **Milestone 3 (player interaction) – implemented, 36 unit tests pass, awaiting device test.**
+  At the user's request it also pulled in parts of M5: main menu (START / HIGHSCORES / OPTIONS /
+  CREDITS / QUIT, main scene `src/ui/main_menu.tscn`), options with persistence, highscore storage
+  (no entries until M4 adds completion), credits. HUD shows only spin rate + laser-induced spin
+  change, plus a red/green border glow (red = speeding up, green = slowing). Gameplay gain 200.
+  Sound/music volume options are deferred until audio exists.
+- Next: Milestone 4 – countdown, completion threshold + stabilisation period, timer, pause,
+  restart, submitting results to `Highscores`.
 - Work milestone by milestone. **Do not implement future-milestone features early**
   (surface zones, damage, multiple debris models, online leaderboards are explicitly *later*), but
   keep the hooks described in ARCHITECTURE.md.
@@ -34,6 +43,7 @@ godot --editor --path .                               # open editor (godot = shi
 godot --headless --path . --import                    # import/check project; fails on broken resources
 godot --headless --path . --quit-after 180            # run main scene ~3 s headless; watch for SCRIPT ERROR
 godot --headless --path . --check-only --script res://src/x/y.gd   # parse-check one script
+godot --headless --path . -s res://tests/run_tests.gd # unit tests; exit code = failed count
 powershell -ExecutionPolicy Bypass -File tools\build_android.ps1 -NoInstall   # export debug APK
 powershell -ExecutionPolicy Bypass -File tools\build_android.ps1 -Logcat      # export + install + run + log
 adb logcat -s godot:V                                 # device log
@@ -45,7 +55,25 @@ adb logcat -s godot:V                                 # device log
 
 After changing any `.gd`/`.tscn`/`.tres`, run the headless import + run commands above and make
 sure there are no errors or warnings before reporting success. Physics changes need unit tests
-(headless, `tests/`, introduced in M2).
+in `tests/test_*.gd` (extend `TestCase`, methods `test_*`); run the test command above.
+
+Testing gotchas:
+- Injected input events (`Input.parse_input_event`) are in *window* coordinates and get the
+  stretch transform applied; convert with `root.get_final_transform() * viewport_pos`. The
+  headless window is tiny, so unconverted positions end up ~20× off.
+- Scripts run with `-s` from outside the project treat warnings as errors too (Variant inference).
+- Moved collision bodies reach the physics server one tick later (first frame after spawn).
+- Godot 4.7 has a native `VirtualJoystick` class – a `class_name` that collides with a native
+  class is a parse error ("hides a native class"). Our joystick is `TouchJoystick`.
+- `inference_on_variant` is an error by default: never use `:=` on Variant values
+  (Dictionary access, `Callable.call()`, `ConfigFile.get_value()`); declare the type.
+
+Input notes:
+- Regular Buttons only work for the first finger (emulated mouse). Anything that must be used
+  while another finger is down (fire, focus, joystick) extends `MultiTouchControl`.
+- Godot reports gravity in screen axes (x right, y up, z out of screen, pointing down). Tilt
+  aiming: roll right -> gravity +x -> aim right; top edge towards player -> gravity +z -> aim up.
+  Sign conventions are unit-tested in `tests/test_aim.gd`; verify on the device if changed.
 
 ## Toolchain facts (verified 2026-11-13)
 

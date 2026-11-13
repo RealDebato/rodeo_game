@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DebrisDefinition" format=3]
+
+[ext_resource type="Script" path="res://src/debris/debris_definition.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/envisat_placeholder/envisat_placeholder.tscn" id="2_model"]
+[ext_resource type="Resource" path="res://data/surfaces/default_surface.tres" id="3_surface"]
+
+[resource]
+script = ExtResource("1_script")
+id = "envisat"
+display_name = "Envisat"
+description = "ESA Earth observation satellite (2002-2012), ~26 m x 10 m x 5 m, out of contact and tumbling since 2012. Geometry is a placeholder; mass properties are approximate literature values (principal axes assumed aligned with the model axes)."
+model_scene = ExtResource("2_model")
+mass_kg = 7828.0
+center_of_mass_m = Vector3(-0.63, -0.2, 0)
+inertia_diagonal_kg_m2 = Vector3(17023, 124826, 129112)
+inertia_off_diagonal_kg_m2 = Vector3(0, 0, 0)
+surface_material = ExtResource("3_surface")
+initial_spin_min_deg_s = 2.0
+initial_spin_max_deg_s = 5.0

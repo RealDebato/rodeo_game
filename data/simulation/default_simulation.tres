@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="SimulationConfig" format=3]
+
+[ext_resource type="Script" path="res://src/physics/simulation_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+integrator_substeps = 1
+random_seed = 0

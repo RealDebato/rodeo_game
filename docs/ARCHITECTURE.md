@@ -1,7 +1,8 @@
 # Architecture
 
-Status: **Milestone 1** (environment). Sections marked *(planned)* describe the target design that
-later milestones implement; they exist so early code does not paint us into a corner.
+Status: **Milestone 3** (player interaction; main menu, options and highscore storage pulled
+forward from M5). Sections marked *(planned)* describe the target
+design that later milestones implement; they exist so early code does not paint us into a corner.
 
 ## Directory layout
 
@@ -15,21 +16,40 @@ rodeo_game/                    Godot project root (res://) = Git root
 ├── docs/          (.gdignore) setup, deployment, architecture
 ├── tools/         (.gdignore) setup_windows.ps1, build_android.ps1
 ├── build/         (ignored)   exported APK/AAB
-└── src/                       all game code + scenes, one folder per system
-    ├── boot/                  M1  device_check: platform smoke test / diagnostics
-    ├── core/                  M4  game_manager (autoload), game states, countdown, timer
-    ├── physics/               M2  rotational state + integrator (pure GDScript, no Nodes)
-    ├── debris/                M2  DebrisDefinition resource, debris scene (mesh + collision)
-    ├── surface/               M2  SurfaceMaterial resource (ablation efficiency)
-    ├── laser/                 M2  LaserConfig, ablation impulse model, beam/spot visuals
-    ├── input/                 M3  AimInput interface, joystick + motion implementations
-    ├── ui/                    M4+ HUD, menus, sci-fi theme
-    ├── persistence/           M5  settings store, highscore store
-    └── audio/                 M5  audio manager (autoload)
-(planned) data/                .tres instances: debris/envisat.tres, laser/default.tres, rules/default.tres
-(planned) assets/              models/<debris>/, textures/, audio/, fonts/
-(planned) tests/               headless unit tests for the physics
+├── src/                       all game code + scenes, one folder per system
+│   ├── boot/                  M1  device_check: platform smoke test / diagnostics
+│   ├── game/                  M2  game.tscn/gd: gameplay scene, wires the systems per physics tick
+│   ├── physics/               M2  RotationalState, RotationalIntegrator, InitialStateGenerator,
+│   │                              SimulationConfig (pure GDScript, no Nodes)
+│   ├── debris/                M2  DebrisDefinition resource, Debris node (model + collision pivot)
+│   ├── surface/               M2  SurfaceMaterial resource (ablation efficiency)
+│   ├── laser/                 M2  LaserConfig, AblationModel (pure), LaserEmitter (ray-cast + visuals)
+│   ├── core/                  M3  ScenePaths (scene switching), Platform (platform decisions)
+│   │                          M4  game_manager (autoload), game states, countdown, timer
+│   ├── input/                 M3  AimInput + JoystickAimInput + MotionAimInput, AimConfig,
+│   │                              MultiTouchControl -> TouchJoystick / TouchButton / TouchSlider,
+│   │                              InputActions (desktop keyboard)
+│   ├── ui/                    M3  main menu + panels (options, highscores, credits), GameHUD,
+│   │                              border-glow shader, reticle, SafeAreaContainer, theme/
+│   ├── persistence/           M3  Settings + Highscores autoloads, HighscoreTable (pure)
+│   └── audio/                 M5  audio manager (autoload)
+├── data/                      M2  tunable .tres instances
+│   ├── debris/envisat.tres        mass properties, spin limits, model reference
+│   ├── laser/default_laser.tres   power, focus range, coupling, gameplay gain
+│   ├── simulation/default_simulation.tres
+│   └── surfaces/default_surface.tres
+├── assets/models/envisat_placeholder/   M2  primitive-based Envisat stand-in (mesh + collision)
+└── tests/                     M2  headless unit tests (run_tests.gd + support/test_case.gd)
 ```
+
+### Replacing the Envisat placeholder with a real model
+
+1. Import the model (`.glb` preferred) into `assets/models/envisat/`.
+2. Create a wrapper scene: the imported model + an `AnimatableBody3D` (layer 2 "debris",
+   `sync_to_physics` off) with simple `CollisionShape3D`s (boxes/convex hulls; avoid trimesh).
+   Keep the model's axes: long axis = X, ASAR side = −Y (matches the inertia tensor).
+3. Point `model_scene` in `data/debris/envisat.tres` to the wrapper and update `center_of_mass_m`.
+No code changes are needed.
 
 **Decision – feature folders under `src/` (scene + script side by side)** instead of separate
 `scenes/` and `scripts/` trees. A system is then one folder, which keeps the "separate systems"
@@ -53,16 +73,25 @@ The debris node is a plain `Node3D`/`StaticBody3D` whose transform is **written 
 simulation every frame. Godot's physics server is used **only for ray queries** against the
 debris collision shape (hit point + surface normal).
 
-Planned interfaces (pure `RefCounted`, no scene dependency):
+Implemented interfaces (pure `RefCounted`, no scene dependency):
 
 ```
-RotationalState        orientation q (Quaternion), angular momentum L (world, kg·m²/s),
-                       body inertia tensor I_body (Basis), centre of mass
-                       -> angular_velocity_world(): ω = R · I_body⁻¹ · Rᵀ · L
-RotationalIntegrator   step(state, dt): torque-free motion, L constant, q advanced by ω
-                       (fixed step in _physics_process, sub-stepped if needed)
-                       apply_impulse(state, point_world, J_world): L += (p - c) × J
+RotationalState        orientation q (body->world), angular momentum L (world, N·m·s),
+                       body inertia tensor I_b (Basis)
+                       angular_velocity_world(): ω = R · I_b⁻¹ · Rᵀ · L
+                       apply_impulse(r, J) -> ΔL = r × J;  kinetic_energy() = ½ ω·L
+RotationalIntegrator   step(state, dt): torque-free, L constant, RK4 on dq/dt = ½ ω ⊗ q,
+                       renormalized; optional sub-steps. Subclass for richer models.
+InitialStateGenerator  random orientation + random axis + |ω| in the definition's limits
 ```
+
+**Tick order** (`src/game/game.gd`, `_physics_process`, fixed 60 Hz): aim → ray-cast →
+recoil force → `apply_impulse(r, F·dt)` → integrate → write orientation to the debris node.
+
+**Translation is not simulated.** The recoil also pushes the debris linearly; we assume the
+servicer station-keeps relative to the target. Only the rotational effect matters for the game.
+
+**Precision:** Godot vectors are float32. Tests show < 0.01 % energy drift over 100 s.
 
 ### 2. Laser–ablation impulse model (M2)
 
@@ -84,6 +113,17 @@ realistic geometry/inertia and SI units and apply one documented **gameplay gain
 if needed, on the initial spin limits) so a session lasts ~1–3 minutes. All physics stays
 self-consistent; only the coupling constant is "game-balanced".
 
+Current values (`data/laser/default_laser.tres`): P = 10 kW, C_max = 50 µN/W, I_half = 30 kW/m²,
+spot radius 5 cm (focus 1) … 1 m (focus 0), gain = 200 (raised from 50 in M3 for faster play).
+Physical recoil at full focus ≈ 0.49 N; in game ≈ 98 N. On the solar array (lever ≈ 13 m) that
+is ≈ 1 300 N·m, i.e. up to ≈ 0.6 °/s² of spin change against initial rates of 2–5 °/s. The
+player's *laser power* option scales P by 50–150 %. Final balancing with the completion rule (M4).
+
+**Envisat data** (`data/debris/envisat.tres`): mass 7 828 kg, principal moments ≈ (17 023,
+124 826, 129 112) kg·m² about (long axis X, Y, Z) – approximate values of the magnitude reported in
+the Envisat attitude literature, principal axes assumed aligned with the model. Initial spin
+2–5 °/s (observed tumble rates were roughly 2.7–3.5 °/s). Replace with better data when available.
+
 ### 3. Data-driven debris and surfaces (M2, extended later)
 
 `DebrisDefinition` (custom `Resource`, one `.tres` per object): display name, model scene, mass,
@@ -92,18 +132,28 @@ limits. Adding a rocket stage later = new `.tres` + model; no code changes.
 Surface zones (reflective panels, fragile parts, damage) attach `SurfaceMaterial`s to collision
 shapes/mesh surfaces – the hook exists from M2, the zones themselves are a future feature.
 
-### 4. Input abstraction (M3)
+### 4. Input abstraction (M3, implemented)
 
 ```
-AimInput (base)        get_aim_delta(dt) -> Vector2      // yaw/pitch rate request
- ├── JoystickAimInput  virtual joystick (left thumb), sensitivity, smoothing
- └── MotionAimInput    gravity/gyroscope, calibration (neutral pose), invert, dead-zone,
-                       low-pass filter against drift
-LaserAimController     integrates aim deltas into a beam direction (clamped cone)
+AimInput (base)        update_aim(angles, dt) -> angles   yaw/pitch [rad] relative to the
+                       boresight (laser -> debris CoM), limited to a cone (AimConfig, 30°)
+                       direction_from_angles(boresight, angles) -> beam direction
+ ├── JoystickAimInput  RATE control (FPS look stick): dead zone, power response curve,
+                       smoothed rate; releasing the stick holds the aim
+ └── MotionAimInput    ABSOLUTE tilt control relative to a calibrated neutral gravity vector:
+                       roll -> yaw, pitch -> pitch; dead zone + smoothing; gravity sensor
+                       (fused accel+gyro) with low-pass accelerometer fallback; cannot drift
 ```
 
-The laser simulation only receives a beam direction and a focus value; it never knows which input
-method produced them. The active `AimInput` is chosen from settings.
+The laser only receives a beam direction, a focus value and a firing flag; it never knows which
+input method produced them. The active `AimInput` is created from `Settings.aim_method`.
+
+Touch widgets (`MultiTouchControl` subclasses) read touch events directly, so the joystick, FIRE
+and the FOCUS slider work simultaneously (Godot's Buttons only react to the first finger).
+
+**Feedback:** the game measures the laser-induced change of |ω| per tick
+(`(|ω| after impulse − |ω| before) / dt`), smooths it, and the HUD shows it as a number and as
+a full-screen border glow: green = slowing, red = speeding up, intensity ∝ magnitude.
 
 ### 5. Game flow and autoloads (M4/M5)
 

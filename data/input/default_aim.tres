@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AimConfig" format=3]
+
+[ext_resource type="Script" path="res://src/input/aim_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+cone_half_angle_deg = 30.0
+joystick_max_rate_deg_s = 40.0
+joystick_response_exponent = 1.8
+joystick_dead_zone = 0.08
+joystick_smoothing_s = 0.05
+motion_full_tilt_deg = 18.0
+motion_dead_zone_deg = 1.0
+motion_smoothing_s = 0.08
+accelerometer_filter_s = 0.15

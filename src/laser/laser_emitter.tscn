@@ -1,0 +1,46 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/laser/laser_emitter.gd" id="1_laser"]
+[ext_resource type="Resource" path="res://data/laser/default_laser.tres" id="2_config"]
+
+[sub_resource type="StandardMaterial3D" id="Material_beam"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.12, 0.08, 0.6)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_beam"]
+material = SubResource("Material_beam")
+top_radius = 0.06
+bottom_radius = 0.06
+height = 1.0
+radial_segments = 8
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="Material_spot"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.08, 0.04, 0.85)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_spot"]
+material = SubResource("Material_spot")
+top_radius = 1.0
+bottom_radius = 1.0
+height = 0.02
+radial_segments = 24
+rings = 1
+
+[node name="LaserEmitter" type="Node3D"]
+script = ExtResource("1_laser")
+config = ExtResource("2_config")
+
+[node name="Beam" type="MeshInstance3D" parent="."]
+top_level = true
+visible = false
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_beam")
+
+[node name="Spot" type="MeshInstance3D" parent="."]
+top_level = true
+visible = false
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_spot")
