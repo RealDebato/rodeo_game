@@ -1,7 +1,8 @@
 extends TestCase
-## Debris definitions and randomized initial rotational states.
+## Debris definitions and initial rotational states.
 
 const ENVISAT_PATH: String = "res://data/debris/envisat.tres"
+const START_SPIN_DEG_S: float = 45.0
 
 
 static func _envisat() -> DebrisDefinition:
@@ -33,26 +34,35 @@ func test_unphysical_inertia_is_rejected() -> void:
 	assert_true(not definition.validate().is_empty())
 
 
-func test_initial_spin_stays_within_limits() -> void:
+func test_initial_speed_is_exactly_the_rule_value() -> void:
 	var definition := _envisat()
 	var rng := RandomNumberGenerator.new()
 	for seed_value: int in range(1, 201):
 		rng.seed = seed_value
-		var state := InitialStateGenerator.generate(definition, rng)
-		var speed := rad_to_deg(state.angular_speed())
-		assert_true(speed >= definition.initial_spin_min_deg_s - 1e-3 and speed <= definition.initial_spin_max_deg_s + 1e-3,
-				"seed %d: %.4f deg/s" % [seed_value, speed])
-		assert_near(state.orientation.length(), 1.0, 1e-6)
+		var state := InitialStateGenerator.generate(definition, START_SPIN_DEG_S, rng)
+		assert_near(rad_to_deg(state.angular_speed()), START_SPIN_DEG_S, 1e-3, "seed %d" % seed_value)
+
+
+func test_only_the_momentum_direction_is_random() -> void:
+	var definition := _envisat()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var a := InitialStateGenerator.generate(definition, START_SPIN_DEG_S, rng)
+	var b := InitialStateGenerator.generate(definition, START_SPIN_DEG_S, rng)
+	assert_true(a.orientation.is_equal_approx(Quaternion.IDENTITY), "orientation fixed by default")
+	assert_true(b.orientation.is_equal_approx(Quaternion.IDENTITY), "orientation fixed by default")
+	assert_true(a.angular_momentum.normalized().distance_to(b.angular_momentum.normalized()) > 1e-3,
+			"two draws should give different L directions")
 
 
 func test_same_seed_gives_same_state() -> void:
 	var definition := _envisat()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
-	var a := InitialStateGenerator.generate(definition, rng)
+	var a := InitialStateGenerator.generate(definition, START_SPIN_DEG_S, rng, true)
 	rng.seed = 42
-	var b := InitialStateGenerator.generate(definition, rng)
-	assert_vec_near(a.angular_momentum, b.angular_momentum, 1e-6)
+	var b := InitialStateGenerator.generate(definition, START_SPIN_DEG_S, rng, true)
+	assert_vec_near(a.angular_momentum, b.angular_momentum, 1e-3)
 	assert_near(a.orientation.angle_to(b.orientation), 0.0, 1e-6)
 
 

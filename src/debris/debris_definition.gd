@@ -1,6 +1,7 @@
 class_name DebrisDefinition
 extends Resource
-## Data describing one debris object: model, mass properties, surface and initial-spin limits.
+## Data describing one debris object: model, mass properties and surface.
+## (The start spin is a mission rule, see GameRules.)
 ##
 ## A new debris object (other satellite, rocket stage, ...) is a new .tres using this script plus
 ## a model scene – no code changes. Body frame = the model scene's local frame, in metres.
@@ -29,12 +30,6 @@ extends Resource
 ## Material used for every surface (surface zones are a future feature).
 @export var surface_material: SurfaceMaterial
 
-@export_group("Initial spin")
-## Lower limit of the random initial angular speed [°/s].
-@export_range(0.0, 30.0, 0.1, "suffix:°/s") var initial_spin_min_deg_s: float = 1.0
-## Upper limit of the random initial angular speed [°/s].
-@export_range(0.0, 30.0, 0.1, "suffix:°/s") var initial_spin_max_deg_s: float = 4.0
-
 
 ## Inertia tensor about the centre of mass in body-frame axes [kg·m²].
 func inertia_tensor() -> Basis:
@@ -62,6 +57,4 @@ func validate() -> PackedStringArray:
 	# Positive definite <=> all leading principal minors > 0 (Sylvester's criterion).
 	if d.x * d.y - o.x * o.x <= 0.0 or inertia_tensor().determinant() <= 0.0:
 		errors.append("inertia tensor is not positive definite")
-	if initial_spin_min_deg_s < 0.0 or initial_spin_max_deg_s < initial_spin_min_deg_s:
-		errors.append("initial spin limits must satisfy 0 <= min <= max")
 	return errors

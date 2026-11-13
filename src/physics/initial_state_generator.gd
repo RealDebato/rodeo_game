@@ -1,18 +1,23 @@
 class_name InitialStateGenerator
 extends RefCounted
-## Creates randomized initial rotational states within the limits of a DebrisDefinition.
+## Creates initial rotational states.
 ##
-## Orientation: uniformly random (Shoemake's method). Spin axis: uniformly random direction.
-## Spin rate: uniform in [initial_spin_min_deg_s, initial_spin_max_deg_s] (initial |ω|; for a
-## general tumble |ω| then varies slightly while L and the energy stay constant).
+## The direction of the initial angular momentum L is uniformly random; its magnitude is chosen
+## so that the initial angular speed |ω| = |I⁻¹ L| equals the requested spin. (For a general
+## tumble |ω| then varies slightly over time while L and the energy stay constant.)
+## The start orientation is the identity unless randomize_orientation is set (Shoemake's method).
 
 
-## New random state for `definition`, drawn from `rng` (seed it for reproducible states).
-static func generate(definition: DebrisDefinition, rng: RandomNumberGenerator) -> RotationalState:
+## New state for `definition` with initial |ω| = spin_deg_s, drawn from `rng`.
+static func generate(definition: DebrisDefinition, spin_deg_s: float, rng: RandomNumberGenerator,
+		randomize_orientation: bool = false) -> RotationalState:
 	var state := RotationalState.new(definition.inertia_tensor())
-	state.orientation = random_orientation(rng)
-	var speed := deg_to_rad(rng.randf_range(definition.initial_spin_min_deg_s, definition.initial_spin_max_deg_s))
-	state.set_angular_velocity_world(random_unit_vector(rng) * speed)
+	if randomize_orientation:
+		state.orientation = random_orientation(rng)
+	var direction := random_unit_vector(rng)
+	# ω produced by a unit angular momentum along `direction`; scale L to reach the target |ω|.
+	var omega_per_unit_l := (state.inertia_world().inverse() * direction).length()
+	state.angular_momentum = direction * (deg_to_rad(spin_deg_s) / omega_per_unit_l)
 	return state
 
 

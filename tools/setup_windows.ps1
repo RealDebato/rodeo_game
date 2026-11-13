@@ -20,8 +20,9 @@
     https://developer.android.com/studio/terms. Without it, sdkmanager asks you to accept them.
 
 .PARAMETER WithGradleBuildTools
-    Also install NDK r28b and CMake 3.10.2. Only needed for Gradle builds (Android plugins, AAB for
-    Google Play). Not needed for the standard APK export used during development.
+    Also install Android 36, build-tools 36.1.0 and NDK 29.0.14206865 (what Godot 4.7.2's Gradle
+    template expects). Needed for Gradle builds, i.e. the AAB for Google Play. Not needed for the
+    standard APK export used during development.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File tools\setup_windows.ps1
@@ -45,7 +46,8 @@ $JdkMajor           = 17
 $CmdlineToolsZip    = 'commandlinetools-win-15859902_latest.zip'
 $CmdlineToolsSha256 = '90ae805d20434428bffcb699c290860f19bb5f66a67e6b330067e3de801fb04a'
 $SdkPackages        = @('platform-tools', 'build-tools/35.0.1', 'platforms/android-35')
-$GradlePackages     = @('cmake/3.10.2.4988404', 'ndk/28.1.13356709')
+# Versions required by Godot 4.7.2's Gradle template (android_source.zip: config.gradle).
+$GradlePackages     = @('platforms/android-36', 'build-tools/36.1.0', 'ndk/29.0.14206865')
 
 # --- Locations --------------------------------------------------------------------------------------
 $JdkRoot      = Join-Path $env:LOCALAPPDATA 'Programs\Temurin'

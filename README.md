@@ -34,9 +34,9 @@ powershell -ExecutionPolicy Bypass -File tools\build_android.ps1 -Logcat
 |---|---|---|
 | 1 | Development environment, Android deployment | **done** – verified on Fairphone 4 5G |
 | 2 | 3D simulation prototype: Envisat model, rotational physics, laser raycast, recoil torque | **done** |
-| 3 | Player interaction: joystick + motion aiming, firing, impact visualisation (+ main menu, options, credits, highscore storage pulled in from M5) | **implemented** – device test pending |
-| 4 | Game loop: countdown, completion threshold, timer, pause/restart | – |
-| 5 | Menus and persistence: main menu, highscores, options, credits, exit | – |
+| 3 | Player interaction: joystick + motion aiming, firing, impact visualisation (+ main menu, options, credits, highscore storage pulled in from M5) | **done** |
+| 4 | Game loop: countdown, win at < 4 °/s, timer, pause/restart, auto-pause, win screen + highscores | **implemented** – device test pending |
+| 5 | Menus and persistence: main menu, highscores, options, credits, exit | mostly done in M3/M4; audio + volume options open |
 | 6 | Mobile optimisation, real-device testing, iOS preparation | – |
 
 ## License

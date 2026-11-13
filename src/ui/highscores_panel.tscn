@@ -56,7 +56,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.75, 0.85, 1)
 theme_override_font_sizes/font_size = 22
 text = "No completed missions yet.
-Times are recorded once the de-tumbling goal is in place (next milestone)."
+Bring the spin below the target rate to record a time."
 autowrap_mode = 3
 
 [node name="BackButton" type="Button" parent="Margin/VBox"]

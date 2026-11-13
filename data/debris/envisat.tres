@@ -15,5 +15,3 @@ center_of_mass_m = Vector3(-0.63, -0.2, 0)
 inertia_diagonal_kg_m2 = Vector3(17023, 124826, 129112)
 inertia_off_diagonal_kg_m2 = Vector3(0, 0, 0)
 surface_material = ExtResource("3_surface")
-initial_spin_min_deg_s = 2.0
-initial_spin_max_deg_s = 5.0

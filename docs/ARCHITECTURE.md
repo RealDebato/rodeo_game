@@ -1,7 +1,6 @@
 # Architecture
 
-Status: **Milestone 3** (player interaction; main menu, options and highscore storage pulled
-forward from M5). Sections marked *(planned)* describe the target
+Status: **Milestone 4** (game loop; main menu, options and highscores pulled forward from M5). Sections marked *(planned)* describe the target
 design that later milestones implement; they exist so early code does not paint us into a corner.
 
 ## Directory layout
@@ -114,10 +113,10 @@ if needed, on the initial spin limits) so a session lasts ~1–3 minutes. All ph
 self-consistent; only the coupling constant is "game-balanced".
 
 Current values (`data/laser/default_laser.tres`): P = 10 kW, C_max = 50 µN/W, I_half = 30 kW/m²,
-spot radius 5 cm (focus 1) … 1 m (focus 0), gain = 200 (raised from 50 in M3 for faster play).
-Physical recoil at full focus ≈ 0.49 N; in game ≈ 98 N. On the solar array (lever ≈ 13 m) that
-is ≈ 1 300 N·m, i.e. up to ≈ 0.6 °/s² of spin change against initial rates of 2–5 °/s. The
-player's *laser power* option scales P by 50–150 %. Final balancing with the completion rule (M4).
+spot radius 5 cm (focus 1) … 1 m (focus 0), gain = 500 (50 → 200 in M3 → 500 in M4).
+Physical recoil at full focus ≈ 0.49 N; in game ≈ 244 N. On the solar array (lever ≈ 13 m) that
+is ≈ 3 200 N·m, i.e. up to ≈ 1.4 °/s² of spin change. Every mission starts at 45 °/s and is won
+below 4 °/s. The player's *laser power* option scales P by 50–150 %.
 
 **Envisat data** (`data/debris/envisat.tres`): mass 7 828 kg, principal moments ≈ (17 023,
 124 826, 129 112) kg·m² about (long axis X, Y, Z) – approximate values of the magnitude reported in
@@ -155,13 +154,30 @@ and the FOCUS slider work simultaneously (Godot's Buttons only react to the firs
 (`(|ω| after impulse − |ω| before) / dt`), smooths it, and the HUD shows it as a number and as
 a full-screen border glow: green = slowing, red = speeding up, intensity ∝ magnitude.
 
-### 5. Game flow and autoloads (M4/M5)
+### 5. Game flow and autoloads (M4, implemented)
 
-Autoloads are limited to true app-wide services: `GameManager` (state machine:
-`MENU → COUNTDOWN → RUNNING ⇄ PAUSED → COMPLETED`), `Settings`, `Highscores`, `AudioManager`.
-Systems talk via **signals** (e.g. `debris_stabilized`, `laser_fired`) rather than reaching into
-each other. Completion rule: |ω| < threshold continuously for the stabilisation period (both
-configurable in a `GameRules` resource).
+`GameSession` (pure `RefCounted`, `src/core/`) is the mission state machine
+`COUNTDOWN → RUNNING ⇄ PAUSED → COMPLETED`, with the timer and the win rule: |ω| below
+`GameRules.completion_threshold_deg_s` (4 °/s) continuously for `stabilization_s` (1 s). It lives
+in the game scene (no `GameManager` autoload needed so far). Pausing sets `SceneTree.paused`; the
+pause menu, dimmer and win screen use `process_mode = ALWAYS`. App pause / focus loss and Android
+back pause the mission. Results go to the `Highscores` autoload.
+
+Autoloads: `Settings`, `Highscores` (later `AudioManager`). Systems talk via signals.
+
+### 5b. Servicer orbit – why the viewpoint moves
+
+Recoil acts along −n of surfaces facing the laser, so it creates almost no torque about the
+line of sight b. With a fixed viewpoint the component L·b is practically unreachable: a greedy
+optimal-aim bot drove L parallel to b and got stuck at 12–16 °/s. Options considered:
+
+| Option | Verdict |
+|---|---|
+| **Servicer slowly circles the debris (chosen, 5 °/s about the vertical)** | Physically plausible proximity-ops manoeuvre; works for any debris model; every L component becomes reachable as b sweeps around. Bot wins in 1:17–4:03 from 45 °/s. |
+| Oblique "propeller" surfaces on the model | Depends on each model's geometry; breaks again for other debris |
+| Player-controlled fly-around | Most strategic, but a third control on a phone; possible later |
+
+`GameRules.servicer_orbit_deg_s = 0` restores the fixed viewpoint.
 
 Persistence uses `ConfigFile` under `user://` (`settings.cfg`, `highscores.cfg`). `user://` maps to
 app-private storage on Android and iOS, so no storage permissions are needed.

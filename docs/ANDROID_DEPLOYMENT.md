@@ -96,23 +96,19 @@ Launch the app on the phone and confirm:
 
 Please report the device model, Android version, renderer line, FPS and any failed item.
 
-## 5. Release builds (later, Milestone 6)
+## 5. Release builds (Google Play / sharing)
 
-Release builds need your own **release keystore** (never the debug one, never committed):
+See [PLAY_STORE_RELEASE.md](PLAY_STORE_RELEASE.md). In short:
 
 ```powershell
-& "$env:JAVA_HOME\bin\keytool.exe" -v -genkey -keystore $env:USERPROFILE\keys\laser_detumbling.keystore `
-    -alias laserdetumbling -keyalg RSA -validity 10000
+powershell -ExecutionPolicy Bypass -File tools\create_release_keystore.ps1        # once, back it up
+powershell -ExecutionPolicy Bypass -File tools\build_android.ps1 -Release -Aab    # Play bundle
+powershell -ExecutionPolicy Bypass -File tools\build_android.ps1 -Release         # shareable APK
 ```
 
-Configure it in *Project → Export → Android → Keystore → Release / Release User / Release Password*.
-Godot stores these credentials in `.godot/export_credentials.cfg` (git-ignored), not in
-`export_presets.cfg`. Keystore and key password must currently be identical. **Back up the
-keystore** – losing it means you can never update the app on Google Play.
-
-Google Play requires an **AAB**, which needs a Gradle build: run the setup script with
-`-WithGradleBuildTools`, then *Project → Install Android Build Template* and enable
-*Gradle Build → Use Gradle Build* with export format *AAB* in the preset.
+The release key lives in `%USERPROFILE%\.laser-detumbling\` (never in the repo); the build script
+passes it to Godot via `GODOT_ANDROID_KEYSTORE_RELEASE_*` environment variables. The AAB preset
+uses a Gradle build; the build template is installed into `android/` (git-ignored) on first use.
 
 ## Troubleshooting
 

@@ -17,6 +17,18 @@ func is_touched() -> bool:
 	return _touch_index != -1
 
 
+## Forgets the held finger (e.g. when the game pauses and the release event will not arrive).
+func cancel_touch() -> void:
+	if _touch_index != -1:
+		_touch_index = -1
+		_touch_cancelled()
+
+
+## Called by cancel_touch(). Default: same as a normal release.
+func _touch_cancelled() -> void:
+	_touch_ended()
+
+
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree():
 		if _touch_index != -1:

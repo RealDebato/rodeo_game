@@ -22,14 +22,25 @@ The full product brief lives in the first conversation; the condensed design is 
   are enabled in `project.godot` (magnetometer deliberately off). Without them the values are zero.
 - **Milestone 2 (simulation prototype) – done**, verified on the Fairphone. Envisat is a
   primitive placeholder (no suitably licensed Envisat model found).
-- **Milestone 3 (player interaction) – implemented, 36 unit tests pass, awaiting device test.**
+- **Milestone 4 (game loop) – implemented, 43 unit tests pass, awaiting device test.**
+  Rules in `data/rules/default_rules.tres` (user decisions): start always 45 °/s, only the
+  direction of L random, fixed start orientation; win = |ω| < 4 °/s held 1 s; 3 s countdown
+  (debris tumbles, laser + timer start at GO). Gain 500. FIRE: hold, or double-tap = continuous
+  wave (CW) toggle. Tilt mode puts FOCUS on the left. Pause menu (resume/restart/menu),
+  auto-pause on app pause / focus loss, Android back = pause. Win screen with time + highscore
+  place. HUD still shows only spin rate + change (user's choice: no timer while playing).
+- **Servicer orbit (important):** recoil can hardly create torque about the laser's line of sight,
+  so with a fixed viewpoint the L component along it was unreachable (bot got stuck at 12–16 °/s).
+  The servicer (camera + laser, node `Servicer`) now circles the debris at 5 °/s
+  (`GameRules.servicer_orbit_deg_s`). A greedy "perfect player" bot then wins in 1:17–4:03.
+- Milestone 3 (player interaction) – done; details:
   At the user's request it also pulled in parts of M5: main menu (START / HIGHSCORES / OPTIONS /
   CREDITS / QUIT, main scene `src/ui/main_menu.tscn`), options with persistence, highscore storage
   (no entries until M4 adds completion), credits. HUD shows only spin rate + laser-induced spin
-  change, plus a red/green border glow (red = speeding up, green = slowing). Gameplay gain 200.
+  change, plus a red/green border glow (red = speeding up, green = slowing).
   Sound/music volume options are deferred until audio exists.
-- Next: Milestone 4 – countdown, completion threshold + stabilisation period, timer, pause,
-  restart, submitting results to `Highscores`.
+- Next: Milestone 5 leftovers (audio + volume options) and Milestone 6 (device optimisation,
+  iOS preparation). Balancing of session length may be revisited (see README).
 - Work milestone by milestone. **Do not implement future-milestone features early**
   (surface zones, damage, multiple debris models, online leaderboards are explicitly *later*), but
   keep the hooks described in ARCHITECTURE.md.
@@ -46,6 +57,9 @@ godot --headless --path . --check-only --script res://src/x/y.gd   # parse-check
 godot --headless --path . -s res://tests/run_tests.gd # unit tests; exit code = failed count
 powershell -ExecutionPolicy Bypass -File tools\build_android.ps1 -NoInstall   # export debug APK
 powershell -ExecutionPolicy Bypass -File tools\build_android.ps1 -Logcat      # export + install + run + log
+powershell -ExecutionPolicy Bypass -File tools\build_android.ps1 -Release -Aab # signed Play bundle (Gradle)
+powershell -ExecutionPolicy Bypass -File tools\build_android.ps1 -Release      # signed shareable APK
+godot --headless --path . -s res://tools/export_store_icon.gd                  # build/store/icon_512.png
 adb logcat -s godot:V                                 # device log
 ```
 
@@ -63,6 +77,11 @@ Testing gotchas:
   headless window is tiny, so unconverted positions end up ~20× off.
 - Scripts run with `-s` from outside the project treat warnings as errors too (Variant inference).
 - Moved collision bodies reach the physics server one tick later (first frame after spawn).
+- `--fixed-fps 60` with `-s` runs simulated time as fast as possible: a scratch bot that sets
+  `game._aim_angles` and presses the `fire` action plays a full mission in seconds. It writes to
+  the real desktop highscore file (`%APPDATA%\Godot\app_userdata\Laser De-Tumbling\`) – back it
+  up / remove it around such runs.
+- In tests, sum time steps that are exact in binary (0.125) to avoid off-by-one-tick results.
 - Godot 4.7 has a native `VirtualJoystick` class – a `class_name` that collides with a native
   class is a parse error ("hides a native class"). Our joystick is `TouchJoystick`.
 - `inference_on_variant` is an error by default: never use `:=` on Variant values
@@ -92,6 +111,13 @@ Input notes:
   Phone Link is irrelevant for adb. The new `android` CLI does not offer the Google USB driver;
   direct download: `usb_driver_r13-windows.zip`.
 - Debug keystore auto-generated at `%APPDATA%\Godot\keystores\debug.keystore`.
+- Release/upload key: `%USERPROFILE%\.laser-detumbling\release.keystore` + `release.properties`
+  (alias `upload`, PKCS12, SHA-256 `11:4B:C8:FD:…:01:36`). Never read or print the password; never
+  copy it into the repo. Parse the properties file line by line (ConvertFrom-StringData breaks
+  on Windows backslashes).
+- Gradle (AAB) builds need what Godot's template declares in `android_source.zip/config.gradle`:
+  compileSdk/targetSdk 36, build-tools 36.1.0, NDK 29.0.14206865 (newer than the Godot docs say).
+- Google Play needs an AAB; every upload needs a higher `version/code` in `export_presets.cfg`.
 - Windows PowerShell 5.1: native stderr becomes errors under `$ErrorActionPreference='Stop'` – wrap
   native calls (see `Invoke-Native` in `tools/*.ps1`). Piping input into `.bat` tools does not work.
 

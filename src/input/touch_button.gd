@@ -30,10 +30,19 @@ func _accepts_touch_at(viewport_position: Vector2) -> bool:
 	return viewport_position.distance_to(center) <= minf(size.x, size.y) * 0.5
 
 
+func _touch_cancelled() -> void:
+	_set_pressed(false)  # no `tapped` for a cancelled touch
+
+
+## Whether the button is drawn highlighted. Subclasses may add states (e.g. latched).
+func _is_lit() -> bool:
+	return pressed
+
+
 func _draw() -> void:
 	var center := size * 0.5
 	var r := minf(size.x, size.y) * 0.5
-	var fill := Color(color, color.a * (0.9 if pressed else 0.35))
+	var fill := Color(color, color.a * (0.9 if _is_lit() else 0.35))
 	draw_circle(center, r, fill)
 	draw_arc(center, r - 1.5, 0.0, TAU, 48, Color(color, 1.0), 3.0, true)
 	var font := get_theme_default_font()

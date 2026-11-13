@@ -28,7 +28,7 @@ extends Resource
 ## Dimensionless gain on the recoil force. Real laser de-tumbling of Envisat takes days to weeks;
 ## this compresses one session to minutes. It scales magnitudes only: directions, lever arms and
 ## therefore whether a shot slows or speeds up the tumble stay physical. 1 = physical.
-@export_range(1.0, 1000.0, 1.0) var gameplay_gain: float = 200.0
+@export_range(1.0, 2000.0, 1.0) var gameplay_gain: float = 500.0
 
 
 ## Returns human-readable problems with this configuration (empty = valid).

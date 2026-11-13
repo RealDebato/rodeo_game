@@ -1,0 +1,91 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/ui/result_panel.gd" id="1_result"]
+
+[node name="ResultPanel" type="PanelContainer"]
+process_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -420.0
+offset_top = -250.0
+offset_right = 420.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_result")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 28
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="Status" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.25, 1, 0.45, 1)
+theme_override_font_sizes/font_size = 20
+text = "TARGET STABILISED  -  MISSION COMPLETE"
+horizontal_alignment = 1
+
+[node name="Message" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 34
+text = "You saved an orbit.
+Thank you for your service!"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="TimeTitle" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 18
+text = "MISSION TIME"
+horizontal_alignment = 1
+
+[node name="TimeValue" type="Label" parent="Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.97, 1, 1)
+theme_override_font_sizes/font_size = 52
+text = "0:00.0"
+horizontal_alignment = 1
+
+[node name="PlaceValue" type="Label" parent="Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "PLACE 1 OF 1"
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 24
+
+[node name="RestartButton" type="Button" parent="Margin/VBox/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 68)
+layout_mode = 2
+focus_mode = 0
+text = "RESTART"
+
+[node name="MenuButton" type="Button" parent="Margin/VBox/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 68)
+layout_mode = 2
+focus_mode = 0
+text = "MAIN MENU"
